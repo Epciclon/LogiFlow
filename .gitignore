@@ -1,0 +1,51 @@
+# Archivos LaTeX temporales
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.lof
+*.lot
+*.pdf
+
+# Java build
+**/target/
+*.class
+*.jar
+*.war
+
+# Maven
+.mvn/
+**/mvnw
+**/mvnw.cmd
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# Logs
+logs/
+*.log
+
+# Docker
+*.env
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporales
+*.tmp
+*.bak
+*~

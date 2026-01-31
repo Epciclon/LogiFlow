@@ -1,0 +1,496 @@
+# Ejemplos Postman - LogiFlow Pedido Service
+
+## Variables de Entorno
+```json
+{
+  "base_url": "http://localhost:8083",
+  "pedido_id": "",
+  "cliente_id": "",
+  "repartidor_id": "",
+  "numero_pedido": ""
+}
+```
+
+---
+
+## 1. Información del Servicio
+
+### GET /
+```http
+GET {{base_url}}/ HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Status is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+pm.test("Service info is correct", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.servicio).to.eql("LogiFlow - Pedido Service");
+    pm.expect(jsonData.puerto).to.eql(8083);
+});
+```
+
+---
+
+## 2. Crear Pedido Urbano
+
+### POST /api/pedidos
+```http
+POST {{base_url}}/api/pedidos HTTP/1.1
+Content-Type: application/json
+
+{
+  "clienteId": "{{cliente_id}}",
+  "clienteNombre": "Juan Pérez",
+  "tipoEntrega": "URBANA_RAPIDA",
+  "prioridad": "NORMAL",
+  "direccionOrigen": "Av. 6 de Diciembre N36-109, Quito",
+  "latitudOrigen": -0.1807,
+  "longitudOrigen": -78.4678,
+  "direccionDestino": "Av. Naciones Unidas E10-13, Quito",
+  "latitudDestino": -0.1900,
+  "longitudDestino": -78.4800,
+  "descripcionPaquete": "Documentos urgentes",
+  "pesoKg": 0.5,
+  "dimensiones": "30x20x5 cm",
+  "observaciones": "Llamar al llegar"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido created successfully", function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test("Response has pedido data", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.have.property("id");
+    pm.expect(jsonData).to.have.property("numeroPedido");
+    pm.expect(jsonData.estado).to.eql("RECIBIDO");
+    
+    //Save pedido_id for next requests
+    pm.environment.set("pedido_id", jsonData.id);
+    pm.environment.set("numero_pedido", jsonData.numeroPedido);
+});
+```
+
+---
+
+## 3. Crear Pedido Intermunicipal
+
+### POST /api/pedidos
+```http
+POST {{base_url}}/api/pedidos HTTP/1.1
+Content-Type: application/json
+
+{
+  "clienteId": "{{cliente_id}}",
+  "clienteNombre": "María González",
+  "tipoEntrega": "INTERMUNICIPAL",
+  "prioridad": "ALTA",
+  "direccionOrigen": "Centro Histórico, Quito",
+  "latitudOrigen": -0.2201,
+  "longitudOrigen": -78.5123,
+  "direccionDestino": "Plaza Central, Ambato",
+  "latitudDestino": -1.2490,
+  "longitudDestino": -78.6167,
+  "descripcionPaquete": "Paquete mediano con productos",
+  "pesoKg": 5.0,
+  "dimensiones": "50x40x30 cm",
+  "fechaEstimadaEntrega": "2024-01-20T18:00:00",
+  "observaciones": "Frágil - Manejar con cuidado"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido intermunicipal created", function () {
+    pm.response.to.have.status(201);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.tipoEntrega).to.eql("INTERMUNICIPAL");
+    pm.expect(jsonData.prioridad).to.eql("ALTA");
+});
+```
+
+---
+
+## 4. Crear Pedido Nacional
+
+### POST /api/pedidos
+```http
+POST {{base_url}}/api/pedidos HTTP/1.1
+Content-Type: application/json
+
+{
+  "clienteId": "{{cliente_id}}",
+  "clienteNombre": "Carlos Rodríguez",
+  "tipoEntrega": "NACIONAL",
+  "prioridad": "URGENTE",
+  "direccionOrigen": "Parque Industrial, Quito",
+  "latitudOrigen": -0.2500,
+  "longitudOrigen": -78.5200,
+  "direccionDestino": "Zona Industrial, Guayaquil",
+  "latitudDestino": -2.1700,
+  "longitudDestino": -79.9224,
+  "descripcionPaquete": "Carga de productos electrónicos",
+  "pesoKg": 50.0,
+  "dimensiones": "100x80x60 cm",
+  "fechaEstimadaEntrega": "2024-01-22T10:00:00",
+  "observaciones": "Entrega en horario de oficina"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido nacional created", function () {
+    pm.response.to.have.status(201);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.tipoEntrega).to.eql("NACIONAL");
+});
+```
+
+---
+
+## 5. Obtener Todos los Pedidos
+
+### GET /api/pedidos
+```http
+GET {{base_url}}/api/pedidos HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get all pedidos", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+    pm.expect(jsonData.length).to.be.above(0);
+});
+```
+
+---
+
+## 6. Obtener Pedido por ID
+
+### GET /api/pedidos/{id}
+```http
+GET {{base_url}}/api/pedidos/{{pedido_id}} HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedido by ID", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.id).to.eql(pm.environment.get("pedido_id"));
+});
+```
+
+---
+
+## 7. Obtener Pedido por Número
+
+### GET /api/pedidos/numero/{numeroPedido}
+```http
+GET {{base_url}}/api/pedidos/numero/{{numero_pedido}} HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedido by numero", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.numeroPedido).to.eql(pm.environment.get("numero_pedido"));
+});
+```
+
+---
+
+## 8. Obtener Pedidos por Cliente
+
+### GET /api/pedidos/cliente/{clienteId}
+```http
+GET {{base_url}}/api/pedidos/cliente/{{cliente_id}} HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedidos by cliente", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+    if (jsonData.length > 0) {
+        pm.expect(jsonData[0].clienteId).to.eql(pm.environment.get("cliente_id"));
+    }
+});
+```
+
+---
+
+## 9. Obtener Pedidos por Repartidor
+
+### GET /api/pedidos/repartidor/{repartidorId}
+```http
+GET {{base_url}}/api/pedidos/repartidor/{{repartidor_id}} HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedidos by repartidor", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+});
+```
+
+---
+
+## 10. Obtener Pedidos por Estado
+
+### GET /api/pedidos/estado/RECIBIDO
+```http
+GET {{base_url}}/api/pedidos/estado/RECIBIDO HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedidos by estado", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+    if (jsonData.length > 0) {
+        pm.expect(jsonData[0].estado).to.eql("RECIBIDO");
+    }
+});
+```
+
+---
+
+## 11. Asignar Repartidor
+
+### PATCH /api/pedidos/{pedidoId}/asignar-repartidor
+```http
+PATCH {{base_url}}/api/pedidos/{{pedido_id}}/asignar-repartidor HTTP/1.1
+Content-Type: application/json
+
+{
+  "repartidorId": "{{repartidor_id}}",
+  "repartidorNombre": "Carlos Rodríguez"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Repartidor assigned", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.estado).to.eql("ASIGNADO");
+    pm.expect(jsonData.repartidorId).to.eql(pm.environment.get("repartidor_id"));
+});
+```
+
+---
+
+## 12. Cambiar Estado a EN_PREPARACION
+
+### PATCH /api/pedidos/{pedidoId}/estado
+```http
+PATCH {{base_url}}/api/pedidos/{{pedido_id}}/estado HTTP/1.1
+Content-Type: application/json
+
+{
+  "estado": "EN_PREPARACION"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Estado changed to EN_PREPARACION", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.estado).to.eql("EN_PREPARACION");
+});
+```
+
+---
+
+## 13. Cambiar Estado a EN_RUTA
+
+### PATCH /api/pedidos/{pedidoId}/estado
+```http
+PATCH {{base_url}}/api/pedidos/{{pedido_id}}/estado HTTP/1.1
+Content-Type: application/json
+
+{
+  "estado": "EN_RUTA"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Estado changed to EN_RUTA", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.estado).to.eql("EN_RUTA");
+});
+```
+
+---
+
+## 14. Cambiar Estado a ENTREGADO
+
+### PATCH /api/pedidos/{pedidoId}/estado
+```http
+PATCH {{base_url}}/api/pedidos/{{pedido_id}}/estado HTTP/1.1
+Content-Type: application/json
+
+{
+  "estado": "ENTREGADO"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Estado changed to ENTREGADO", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.estado).to.eql("ENTREGADO");
+    pm.expect(jsonData.fechaEntregaReal).to.not.be.null;
+});
+```
+
+---
+
+## 15. Actualizar Pedido (Tarifas)
+
+### PUT /api/pedidos/{id}
+```http
+PUT {{base_url}}/api/pedidos/{{pedido_id}} HTTP/1.1
+Content-Type: application/json
+
+{
+  "tarifaBase": 5.50,
+  "tarifaTotal": 6.50,
+  "observaciones": "Tarifa actualizada por sistema de facturación"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido updated with tarifas", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.tarifaBase).to.eql(5.50);
+    pm.expect(jsonData.tarifaTotal).to.eql(6.50);
+});
+```
+
+---
+
+## 16. Cancelar Pedido
+
+### PATCH /api/pedidos/{pedidoId}/cancelar
+```http
+PATCH {{base_url}}/api/pedidos/{{pedido_id}}/cancelar HTTP/1.1
+Content-Type: application/json
+
+{
+  "motivo": "Cliente no disponible para recibir"
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido cancelled", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.estado).to.eql("CANCELADO");
+    pm.expect(jsonData.observaciones).to.include("CANCELADO");
+});
+```
+
+---
+
+## 17. Eliminar Pedido (Lógico)
+
+### DELETE /api/pedidos/{id}
+```http
+DELETE {{base_url}}/api/pedidos/{{pedido_id}} HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Pedido deleted", function () {
+    pm.response.to.have.status(204);
+});
+```
+
+---
+
+## 18. Validación - Pedido Fuera de Cobertura (Error)
+
+### POST /api/pedidos
+```http
+POST {{base_url}}/api/pedidos HTTP/1.1
+Content-Type: application/json
+
+{
+  "clienteId": "{{cliente_id}}",
+  "clienteNombre": "Test Error",
+  "tipoEntrega": "URBANA_RAPIDA",
+  "prioridad": "NORMAL",
+  "direccionOrigen": "Quito Centro",
+  "latitudOrigen": -0.1807,
+  "longitudOrigen": -78.4678,
+  "direccionDestino": "Guayaquil",
+  "latitudDestino": -2.1700,
+  "longitudDestino": -79.9224,
+  "descripcionPaquete": "Test",
+  "pesoKg": 1.0
+}
+```
+
+**Test Script:**
+```javascript
+pm.test("Should fail - out of coverage", function () {
+    pm.response.to.have.status(500);
+    var response = pm.response.text();
+    pm.expect(response).to.include("excede el límite");
+});
+```
+
+---
+
+## Estados Válidos
+
+- **RECIBIDO**: Estado inicial al crear pedido
+- **EN_PREPARACION**: Preparando paquete
+- **ASIGNADO**: Repartidor asignado
+- **EN_RUTA**: En camino
+- **ENTREGADO**: Entrega completada
+- **CANCELADO**: Pedido cancelado
+- **DEVUELTO**: Devolución
+
+## Tipos de Entrega
+
+- **URBANA_RAPIDA**: Hasta 20 km
+- **INTERMUNICIPAL**: Hasta 150 km
+- **NACIONAL**: Sin límite
+
+## Prioridades
+
+- **BAJA**
+- **NORMAL**
+- **ALTA**
+- **URGENTE**
+
+---
+
+**Nota:** Antes de ejecutar las pruebas, asegúrate de:
+1. Tener el servicio corriendo en puerto 8083
+2. Configurar las variables de entorno (cliente_id, repartidor_id)
+3. Crear la base de datos PostgreSQL en puerto 5435

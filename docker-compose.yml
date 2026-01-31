@@ -1,0 +1,296 @@
+# ================================================
+# Docker Compose - LogiFlow Platform
+# Plataforma integral de gestión de operaciones de delivery
+# ================================================
+
+services:
+  # ================================================
+  # BASES DE DATOS POSTGRESQL
+  # ================================================
+
+  # Base de datos para auth-service
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: logiflow_auth_db
+    environment:
+      POSTGRES_DB: db_logiflow_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos para pedido-service
+  postgres-pedidos:
+    image: postgres:16-alpine
+    container_name: logiflow_pedidos_db
+    environment:
+      POSTGRES_DB: db_logiflow_pedidos
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_pedidos_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos para fleet-service
+  postgres-fleet:
+    image: postgres:16-alpine
+    container_name: logiflow_fleet_db
+    environment:
+      POSTGRES_DB: db_logiflow_fleet
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_fleet_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Base de datos para billing-service
+  postgres-billing:
+    image: postgres:16-alpine
+    container_name: logiflow_billing_db
+    environment:
+      POSTGRES_DB: db_logiflow_billing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_billing_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ================================================
+  # MICROSERVICIOS LOGIFLOW
+  # ================================================
+
+  # Auth Service - Autenticación y Autorización
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-auth:5432/db_logiflow_auth
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8082
+      JWT_SECRET: logiflow-super-secret-key-2024-change-this-in-production
+      JWT_EXPIRATION: 86400000
+      JWT_REFRESH_EXPIRATION: 604800000
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Pedido Service - Gestión de Pedidos
+  pedido-service:
+    build:
+      context: ./backend/pedido-service
+      dockerfile: Dockerfile
+    container_name: pedido-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-pedidos:5432/db_logiflow_pedidos
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8083
+      PEDIDOS_COBERTURA_URBANA_KM: 20
+      PEDIDOS_COBERTURA_INTERMUNICIPAL_KM: 150
+      JWT_SECRET: logiflow-super-secret-key-2024-change-this-in-production
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres-pedidos:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Fleet Service - Gestión de Flota y Repartidores
+  fleet-service:
+    build:
+      context: ./backend/fleet-service
+      dockerfile: Dockerfile
+    container_name: fleet-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-fleet:5432/db_logiflow_fleet
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8084
+      JWT_SECRET: logiflow-super-secret-key-2024-change-this-in-production
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres-fleet:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Billing Service - Facturación y Tarifas
+  billing-service:
+    build:
+      context: ./backend/billing-service
+      dockerfile: Dockerfile
+    container_name: billing-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-billing:5432/db_logiflow_billing
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8085
+      JWT_SECRET: logiflow-super-secret-key-2024-change-this-in-production
+      BILLING_TARIFAS_URBANA_BASE: 3.00
+      BILLING_TARIFAS_URBANA_POR_KM: 0.50
+      BILLING_TARIFAS_URBANA_POR_KG: 0.20
+      BILLING_TARIFAS_INTERMUNICIPAL_BASE: 10.00
+      BILLING_TARIFAS_INTERMUNICIPAL_POR_KM: 0.80
+      BILLING_TARIFAS_INTERMUNICIPAL_POR_KG: 0.30
+      BILLING_TARIFAS_NACIONAL_BASE: 50.00
+      BILLING_TARIFAS_NACIONAL_POR_KM: 1.20
+      BILLING_TARIFAS_NACIONAL_POR_KG: 0.50
+      BILLING_RECARGOS_URGENTE: 2.00
+      BILLING_RECARGOS_ALTA: 1.50
+      BILLING_RECARGOS_NORMAL: 1.00
+      BILLING_RECARGOS_BAJA: 1.00
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres-billing:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # ================================================
+  # KONG API GATEWAY
+  # ================================================
+
+  # Kong Database
+  kong-database:
+    image: postgres:16-alpine
+    container_name: kong-database
+    environment:
+      POSTGRES_DB: kong
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kong
+    ports:
+      - "5438:5432"
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kong Migrations
+  kong-migrations:
+    image: kong:3.4
+    container_name: kong-migrations
+    command: kong migrations bootstrap
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_DATABASE: kong
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+    depends_on:
+      kong-database:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: on-failure
+
+  # Kong Gateway
+  kong:
+    image: kong:3.4
+    container_name: kong-gateway
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_DATABASE: kong
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+    ports:
+      - "8000:8000"  # Proxy HTTP - Punto de entrada para todas las peticiones
+      - "8443:8443"  # Proxy HTTPS
+      - "8001:8001"  # Admin API HTTP - Para configurar rutas y servicios
+      - "8444:8444"  # Admin API HTTPS
+    depends_on:
+      kong-database:
+        condition: service_healthy
+      kong-migrations:
+        condition: service_completed_successfully
+      auth-service:
+        condition: service_started
+      pedido-service:
+        condition: service_started
+      fleet-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+    networks:
+      - logiflow-network
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+# ================================================
+# VOLÚMENES PERSISTENTES
+# ================================================
+volumes:
+  postgres_auth_data:
+  postgres_pedidos_data:
+  postgres_fleet_data:
+  postgres_billing_data:
+  kong_data:
+
+# ================================================
+# REDES
+# ================================================
+networks:
+  logiflow-network:
+    driver: bridge

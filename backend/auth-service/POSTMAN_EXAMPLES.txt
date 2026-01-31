@@ -1,0 +1,262 @@
+================================================================================
+EJEMPLOS POSTMAN - AUTH SERVICE - LogiFlow
+================================================================================
+
+CONFIGURACIÓN EN POSTMAN
+================================================================================
+
+1. Crear variable de entorno:
+   - Variable: auth_url
+   - Valor: http://localhost:8082
+
+2. Crear variable para guardar tokens:
+   - Variable: access_token
+   - Variable: refresh_token
+
+================================================================================
+ENDPOINTS DISPONIBLES
+================================================================================
+
+----- 1. GET / - Información del Servicio -----
+GET {{auth_url}}/
+
+Respuesta:
+{
+  "service": "LogiFlow - Auth Service",
+  "version": "1.0.0",
+  "description": "Servicio de autenticación y autorización con JWT",
+  "port": "8082",
+  "endpoints": {...},
+  "roles": {...}
+}
+
+----- 2. POST /api/auth/register - Registro de Usuarios -----
+POST {{auth_url}}/api/auth/register
+Content-Type: application/json
+
+//Ejemplo 1: Registro de cliente
+{
+  "username": "nuevoCliente",
+  "email": "nuevo@example.com",
+  "password": "password123",
+  "nombreCompleto": "Nuevo Cliente Test",
+  "telefono": "0991234567"
+}
+
+//Ejemplo 2: Registro sin teléfono (opcional)
+{
+  "username": "usuario2",
+  "email": "usuario2@example.com",
+  "password": "securePass456",
+  "nombreCompleto": "Usuario Dos"
+}
+
+//Respuesta exitosa (201 Created):
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 86400000,
+  "username": "nuevoCliente",
+  "email": "nuevo@example.com",
+  "roles": ["CLIENTE"]
+}
+
+//Script de prueba (Tests tab):
+pm.test("Status code is 201", function () {
+    pm.response.to.have.status(201);
+});
+
+var jsonData = pm.response.json();
+pm.environment.set("access_token", jsonData.accessToken);
+pm.environment.set("refresh_token", jsonData.refreshToken);
+
+----- 3. POST /api/auth/login - Login de Usuarios -----
+POST {{auth_url}}/api/auth/login
+Content-Type: application/json
+
+//Ejemplo 1: Login con cliente
+{
+  "username": "cliente1",
+  "password": "password123"
+}
+
+//Ejemplo 2: Login con repartidor
+{
+  "username": "repartidor1",
+  "password": "password123"
+}
+
+//Ejemplo 3: Login con supervisor
+{
+  "username": "supervisor1",
+  "password": "password123"
+}
+
+//Ejemplo 4: Login con gerente
+{
+  "username": "gerente1",
+  "password": "password123"
+}
+
+//Ejemplo 5: Login con admin
+{
+  "username": "admin",
+  "password": "password123"
+}
+
+//Respuesta exitosa (200 OK):
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 86400000,
+  "username": "cliente1",
+  "email": "cliente1@logiflow.com",
+  "roles": ["CLIENTE"]
+}
+
+//Script de prueba (Tests tab):
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+var jsonData = pm.response.json();
+pm.environment.set("access_token", jsonData.accessToken);
+pm.environment.set("refresh_token", jsonData.refreshToken);
+
+----- 4. POST /api/auth/refresh - Renovar Access Token -----
+POST {{auth_url}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refresh_token}}"
+}
+
+//Respuesta exitosa (200 OK):
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",  //Nuevo access token
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9...",  //Nuevo refresh token
+  "tokenType": "Bearer",
+  "expiresIn": 86400000,
+  "username": "cliente1",
+  "email": "cliente1@logiflow.com",
+  "roles": ["CLIENTE"]
+}
+
+//Script de prueba (Tests tab):
+pm.test("Status code is 200", function () {
+    pm.response.to.have.status(200);
+});
+
+var jsonData = pm.response.json();
+pm.environment.set("access_token", jsonData.accessToken);
+pm.environment.set("refresh_token", jsonData.refreshToken);
+
+================================================================================
+RESPUESTAS DE ERROR COMUNES
+================================================================================
+
+//400 Bad Request - Username ya existe:
+{
+  "error": "El username ya existe: nuevoCliente"
+}
+
+//400 Bad Request - Email ya existe:
+{
+  "error": "El email ya existe: nuevo@example.com"
+}
+
+//401 Unauthorized - Credenciales inválidas:
+{
+  "error": "Credenciales inválidas"
+}
+
+//401 Unauthorized - Cuenta bloqueada:
+{
+  "error": "Cuenta bloqueada debido a múltiples intentos fallidos"
+}
+
+//401 Unauthorized - Refresh token inválido:
+{
+  "error": "Refresh token inválido o expirado"
+}
+
+//400 Bad Request - Validación de campos:
+{
+  "username": "El username es obligatorio",
+  "email": "El email debe ser válido",
+  "password": "El password debe tener al menos 6 caracteres"
+}
+
+================================================================================
+USUARIOS DE PRUEBA (ver test-data.sql)
+================================================================================
+
+Username: cliente1      | Password: password123 | Rol: CLIENTE
+Username: repartidor1   | Password: password123 | Rol: REPARTIDOR
+Username: supervisor1   | Password: password123 | Rol: SUPERVISOR
+Username: gerente1      | Password: password123 | Rol: GERENTE
+Username: admin         | Password: password123 | Rol: ADMINISTRADOR
+Username: multi1        | Password: password123 | Roles: SUPERVISOR, REPARTIDOR
+Username: inactivo1     | Password: password123 | Rol: CLIENTE (cuenta inactiva)
+
+================================================================================
+USO DE TOKENS EN OTROS SERVICIOS
+================================================================================
+
+Una vez que obtengas el access_token, úsalo en los headers de peticiones a otros
+microservicios (pedido-service, fleet-service, billing-service):
+
+Authorization: Bearer {{access_token}}
+
+El token incluye los siguientes claims:
+- sub: username
+- roles: lista de roles del usuario
+- email: email del usuario
+- nombreCompleto: nombre completo del usuario
+- iat: fecha de emisión
+- exp: fecha de expiración
+
+================================================================================
+FLUJO DE AUTENTICACIÓN RECOMENDADO
+================================================================================
+
+1. REGISTRO (solo una vez):
+   POST /api/auth/register
+   - Guarda los tokens retornados
+
+2. LOGIN (cada vez que el usuario inicie sesión):
+   POST /api/auth/login
+   - Guarda los tokens retornados
+
+3. USAR ACCESS TOKEN:
+   - Incluye en header Authorization: Bearer {access_token}
+   - Válido por 24 horas (86400000 ms)
+
+4. RENOVAR TOKEN (cuando el access token expire):
+   POST /api/auth/refresh
+   - Usa el refresh_token guardado
+   - Obtén un nuevo access_token
+   - El refresh token es válido por 7 días (604800000 ms)
+
+5. RE-LOGIN (si el refresh token también expiró):
+   POST /api/auth/login
+   - Solicita credenciales nuevamente
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. Los passwords se encriptan con BCrypt antes de guardarse en la BD
+2. El registro asigna automáticamente el rol CLIENTE
+3. Para asignar otros roles (REPARTIDOR, SUPERVISOR, GERENTE, ADMINISTRADOR),
+   se debe hacer directamente en la base de datos o crear un endpoint de gestión
+4. Después de 3 intentos fallidos de login, la cuenta se bloquea
+5. El access token expira en 24 horas
+6. El refresh token expira en 7 días
+7. Los tokens son stateless (no se almacenan en BD, solo se validan por firma)
+
+================================================================================
+FIN DE EJEMPLOS
+================================================================================

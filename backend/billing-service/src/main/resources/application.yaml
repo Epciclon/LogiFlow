@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: billing-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/db_logiflow_billing}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+server:
+  port: ${SERVER_PORT:8085}
+
+#Configuración de tarifas base
+billing:
+  tarifas:
+    urbana:
+      base: 3.00
+      por-km: 0.50
+      por-kg: 0.20
+    intermunicipal:
+      base: 10.00
+      por-km: 0.80
+      por-kg: 0.30
+    nacional:
+      base: 50.00
+      por-km: 1.20
+      por-kg: 0.50
+  recargos:
+    urgente: 2.00
+    alta: 1.50
+    normal: 1.00
+    baja: 1.00
+
+logging:
+  level:
+    ec.edu.espe: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+#JWT Configuration (mismo secret que auth-service para validar tokens)
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
