@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="es">
+<!--
+╔═══════════════════════════════════════════════════════════════╗
+║  LogiFlow - Cliente WebSocket de Prueba                      ║
+║                                                               ║
+║  Configuración de Conexión:                                  ║
+║  • Kong Gateway: http://localhost:8000                       ║
+║  • Namespace Socket.IO: /notifications                       ║
+║  • Autenticación: JWT Token requerido                        ║
+║                                                               ║
+║  Prerequisitos:                                               ║
+║  1. kubectl port-forward -n logiflow svc/kong-gateway 8000   ║
+║  2. Obtener JWT token desde auth-service (login)             ║
+║  3. Pegar token en el campo "JWT Token"                      ║
+║  4. Click en "Conectar"                                      ║
+║                                                               ║
+║  Kong Gateway routing:                                        ║
+║  http://localhost:8000/notifications → notification-service  ║
+╚═══════════════════════════════════════════════════════════════╝
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiFlow - Cliente WebSocket de Prueba</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.3rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .notifications-panel {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .notification {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .notification.pedido {
+            border-left-color: #667eea;
+        }
+
+        .notification.repartidor {
+            border-left-color: #28a745;
+        }
+
+        .notification.info {
+            border-left-color: #17a2b8;
+        }
+
+        .notification.replay {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+
+        .replay-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .notification-type {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .notification-time {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .notification-message {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .notification-data {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            color: #495057;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .subscriptions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .subscription-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .subscription-tag button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            margin: 0;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 LogiFlow WebSocket Client</h1>
+            <p>Monitor de notificaciones en tiempo real</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Desconectado</span>
+            </div>
+            <div>
+                <span>Cliente ID: <strong id="clientId">-</strong></span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="panel">
+                <h2>🔌 Conexión</h2>
+                <div class="form-group">
+                    <label for="serverUrl">URL del Servidor (Kong Gateway)</label>
+                    <input type="text" id="serverUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+                    <small style="color: #17a2b8; font-size: 0.85rem; display: block; margin-top: 5px;">
+                        🌐 Conectando a través de Kong Gateway en puerto 8000
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label for="jwtToken">JWT Token (Requerido)</label>
+                    <input type="text" id="jwtToken" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                    <small style="color: #dc3545; font-size: 0.85rem; display: block; margin-top: 5px;">
+                        🔒 Requerido para conexión segura (Modo Producción)
+                    </small>
+                </div>
+                <button class="btn-primary" id="connectBtn" onclick="connect()">Conectar</button>
+                <button class="btn-danger" id="disconnectBtn" onclick="disconnect()" disabled>Desconectar</button>
+
+                <h2 style="margin-top: 30px;">📡 Suscripciones</h2>
+                <div class="form-group">
+                    <label for="topicInput">Tópico</label>
+                    <input type="text" id="topicInput" placeholder="all, pedido:123, repartidor:456">
+                </div>
+                <button class="btn-success" id="subscribeBtn" onclick="subscribe()" disabled>Suscribirse</button>
+
+                <div class="subscriptions" id="subscriptionsList"></div>
+
+                <h2 style="margin-top: 30px;">📊 Estadísticas</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMessages">0</div>
+                        <div class="stat-label">Mensajes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pedidoCount">0</div>
+                        <div class="stat-label">Pedidos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="repartidorCount">0</div>
+                        <div class="stat-label">Repartidores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="replayCount">0</div>
+                        <div class="stat-label">📼 Replay</div>
+                    </div>
+                </div>
+
+                <button class="btn-danger" onclick="clearNotifications()" style="margin-top: 20px;">Limpiar Notificaciones</button>
+            </div>
+
+            <div class="panel notifications-panel">
+                <h2>🔔 Notificaciones en Tiempo Real</h2>
+                <div id="notifications"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        let socket = null;
+        let subscriptions = new Set();
+        let stats = {
+            total: 0,
+            pedidos: 0,
+            repartidores: 0,
+            replay: 0
+        };
+
+        function connect() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const jwtToken = document.getElementById('jwtToken').value.trim();
+            
+            if (!jwtToken) {
+                alert('⚠️ Error: Debes ingresar un JWT Token para conectar en modo producción.');
+                return;
+            }
+
+            const socketOptions = {
+                path: '/notifications/socket.io',
+                transports: ['websocket', 'polling'],
+                query: { token: jwtToken }
+            };
+
+            console.log('🔐 Conectando con JWT token...');
+            console.log('📡 Path configurado: /notifications/socket.io');
+            
+            socket = io(serverUrl, socketOptions);
+
+            socket.on('connect', () => {
+                updateStatus(true);
+                addNotification('Sistema', 'Conectado exitosamente al servidor', 'info', {});
+            });
+
+            socket.on('connected', (data) => {
+                document.getElementById('clientId').textContent = data.clientId;
+                console.log('Conectado:', data);
+            });
+
+            socket.on('disconnect', () => {
+                updateStatus(false);
+                addNotification('Sistema', 'Desconectado del servidor', 'info', {});
+            });
+
+            socket.on('notification', (data) => {
+                console.log('Notificación general recibida:', data);
+                addNotification(data.entityType || 'General', data.message, 'info', data);
+                updateStats('total');
+            });
+
+            socket.on('pedido:updated', (data) => {
+                console.log('Pedido actualizado:', data);
+                addNotification('Pedido', data.message || `Pedido actualizado`, 'pedido', data);
+                updateStats('pedido');
+            });
+
+            socket.on('repartidor:updated', (data) => {
+                console.log('Repartidor actualizado:', data);
+                addNotification('Repartidor', data.message || `Repartidor actualizado`, 'repartidor', data);
+                updateStats('repartidor');
+            });
+
+            socket.on('subscribed', (data) => {
+                subscriptions.add(data.topic);
+                updateSubscriptionsList();
+                addNotification('Sistema', `Suscrito a: ${data.topic}`, 'info', {});
+            });
+
+            socket.on('unsubscribed', (data) => {
+                subscriptions.delete(data.topic);
+                updateSubscriptionsList();
+                addNotification('Sistema', `Desuscrito de: ${data.topic}`, 'info', {});
+            });
+
+            socket.on('replay:complete', (data) => {
+                console.log('📼 Replay completado:', data);
+                addNotification('Sistema', `📼 Replay completado: ${data.count} eventos históricos recibidos`, 'info', { count: data.count });
+            });
+
+            socket.on('error', (data) => {
+                console.error('Error:', data);
+                addNotification('Error', data.message || 'Error en conexión WebSocket', 'info', {});
+            });
+
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+            document.getElementById('subscribeBtn').disabled = false;
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                subscriptions.clear();
+                updateSubscriptionsList();
+            }
+            
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+            document.getElementById('subscribeBtn').disabled = true;
+            document.getElementById('clientId').textContent = '-';
+        }
+
+        function subscribe() {
+            const topic = document.getElementById('topicInput').value.trim();
+            if (!topic) {
+                alert('Por favor ingresa un tópico');
+                return;
+            }
+
+            if (socket && socket.connected) {
+                socket.emit('subscribe', { topic });
+                document.getElementById('topicInput').value = '';
+            }
+        }
+
+        function unsubscribe(topic) {
+            if (socket && socket.connected) {
+                socket.emit('unsubscribe', { topic });
+            }
+        }
+
+        function updateStatus(connected) {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = 'Conectado';
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Desconectado';
+            }
+        }
+
+        function updateSubscriptionsList() {
+            const list = document.getElementById('subscriptionsList');
+            list.innerHTML = '';
+            
+            subscriptions.forEach(topic => {
+                const tag = document.createElement('div');
+                tag.className = 'subscription-tag';
+                tag.innerHTML = `
+                    ${topic}
+                    <button onclick="unsubscribe('${topic}')" title="Desuscribirse">×</button>
+                `;
+                list.appendChild(tag);
+            });
+        }
+
+        function addNotification(type, message, category, data) {
+            const container = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            
+            const isReplay = data.replayed === true;
+            const notificationClass = isReplay ? `${category} replay` : category;
+            notification.className = `notification ${notificationClass}`;
+            
+            const now = new Date().toLocaleTimeString();
+            const replayBadge = isReplay ? '<span class="replay-badge">📼 REPLAY</span>' : '';
+            const originalTime = data.originalTimestamp ? new Date(data.originalTimestamp).toLocaleTimeString() : '';
+            const timeDisplay = isReplay && originalTime ? `${originalTime} (replay)` : now;
+            
+            if (isReplay) {
+                stats.replay++;
+                document.getElementById('replayCount').textContent = stats.replay;
+            }
+            
+            notification.innerHTML = `
+                <div class="notification-header">
+                    <span class="notification-type">${type}${replayBadge}</span>
+                    <span class="notification-time">${timeDisplay}</span>
+                </div>
+                <div class="notification-message">${message}</div>
+                ${Object.keys(data).length > 0 ? `
+                    <div class="notification-data">${JSON.stringify(data, null, 2)}</div>
+                ` : ''}
+            `;
+            
+            container.insertBefore(notification, container.firstChild);
+            
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function updateStats(type) {
+            stats.total++;
+            if (type === 'pedido') stats.pedidos++;
+            if (type === 'repartidor') stats.repartidores++;
+            
+            document.getElementById('totalMessages').textContent = stats.total;
+            document.getElementById('pedidoCount').textContent = stats.pedidos;
+            document.getElementById('repartidorCount').textContent = stats.repartidores;
+        }
+
+        function clearNotifications() {
+            document.getElementById('notifications').innerHTML = '';
+            stats = { total: 0, pedidos: 0, repartidores: 0, replay: 0 };
+            document.getElementById('totalMessages').textContent = '0';
+            document.getElementById('pedidoCount').textContent = '0';
+            document.getElementById('repartidorCount').textContent = '0';
+            document.getElementById('replayCount').textContent = '0';
+        }
+
+        document.getElementById('topicInput').addEventListener('focus', function() {
+            this.placeholder = 'Ejemplos: all, pedido:123, repartidor:456, zona:45';
+        });
+
+        document.getElementById('topicInput').addEventListener('blur', function() {
+            this.placeholder = 'all, pedido:123, repartidor:456';
+        });
+
+        document.getElementById('topicInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                subscribe();
+            }
+        });
+    </script>
+</body>
+</html>

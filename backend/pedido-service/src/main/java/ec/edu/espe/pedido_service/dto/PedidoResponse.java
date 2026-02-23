@@ -40,6 +40,11 @@ public class PedidoResponse {
     private Double latitudDestino;
     private Double longitudDestino;
 
+<<<<<<< HEAD
+    private String zonaId;
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
     private String descripcionPaquete;
     private BigDecimal pesoKg;
     private String dimensiones;

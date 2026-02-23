@@ -53,6 +53,10 @@ Content-Type: application/json
   "direccionDestino": "Av. Naciones Unidas E10-13, Quito",
   "latitudDestino": -0.1900,
   "longitudDestino": -78.4800,
+<<<<<<< HEAD
+  "zonaId": "170150",
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
   "descripcionPaquete": "Documentos urgentes",
   "pesoKg": 0.5,
   "dimensiones": "30x20x5 cm",
@@ -98,6 +102,10 @@ Content-Type: application/json
   "direccionDestino": "Plaza Central, Ambato",
   "latitudDestino": -1.2490,
   "longitudDestino": -78.6167,
+<<<<<<< HEAD
+  "zonaId": "180101",
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
   "descripcionPaquete": "Paquete mediano con productos",
   "pesoKg": 5.0,
   "dimensiones": "50x40x30 cm",
@@ -136,6 +144,10 @@ Content-Type: application/json
   "direccionDestino": "Zona Industrial, Guayaquil",
   "latitudDestino": -2.1700,
   "longitudDestino": -79.9224,
+<<<<<<< HEAD
+  "zonaId": "090313",
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
   "descripcionPaquete": "Carga de productos electrónicos",
   "pesoKg": 50.0,
   "dimensiones": "100x80x60 cm",
@@ -270,6 +282,52 @@ pm.test("Get pedidos by estado", function () {
 
 ---
 
+<<<<<<< HEAD
+## 10.1 Obtener Pedidos por Zona (NUEVO)
+
+### GET /api/pedidos?zonaId=170150
+```http
+GET {{base_url}}/api/pedidos?zonaId=170150 HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedidos by zona", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+    if (jsonData.length > 0) {
+        pm.expect(jsonData[0].zonaId).to.eql("170150");
+    }
+});
+```
+
+---
+
+## 10.2 Obtener Pedidos por Zona y Estado (NUEVO)
+
+### GET /api/pedidos?zonaId=170150&estado=EN_RUTA
+```http
+GET {{base_url}}/api/pedidos?zonaId=170150&estado=EN_RUTA HTTP/1.1
+```
+
+**Test Script:**
+```javascript
+pm.test("Get pedidos by zona and estado", function () {
+    pm.response.to.have.status(200);
+    var jsonData = pm.response.json();
+    pm.expect(jsonData).to.be.an('array');
+    if (jsonData.length > 0) {
+        pm.expect(jsonData[0].zonaId).to.eql("170150");
+        pm.expect(jsonData[0].estado).to.eql("EN_RUTA");
+    }
+});
+```
+
+---
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 ## 11. Asignar Repartidor
 
 ### PATCH /api/pedidos/{pedidoId}/asignar-repartidor
@@ -488,9 +546,27 @@ pm.test("Should fail - out of coverage", function () {
 - **ALTA**
 - **URGENTE**
 
+<<<<<<< HEAD
+## Códigos Postales Ecuador (Ejemplos para zonaId)
+
+- **170150**: Quito Norte
+- **170104**: Quito Centro
+- **170157**: Quito Sur
+- **180101**: Ambato Centro
+- **090313**: Guayaquil Norte
+- **060101**: Cuenca Centro
+
+**Fuente:** INEC Ecuador - Estándar Nacional
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 ---
 
 **Nota:** Antes de ejecutar las pruebas, asegúrate de:
 1. Tener el servicio corriendo en puerto 8083
 2. Configurar las variables de entorno (cliente_id, repartidor_id)
 3. Crear la base de datos PostgreSQL en puerto 5435
+<<<<<<< HEAD
+4. **NUEVO:** El campo `zonaId` (código postal) es OBLIGATORIO desde ahora
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a

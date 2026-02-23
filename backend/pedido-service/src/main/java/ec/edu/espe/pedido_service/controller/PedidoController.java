@@ -34,10 +34,38 @@ public class PedidoController {
         }
     }
 
+<<<<<<< HEAD
+    //Obtener todos los pedidos (con filtros opcionales: zonaId, estado)
+    @GetMapping
+    public ResponseEntity<List<PedidoResponse>> obtenerTodosLosPedidos(
+            @RequestParam(required = false) String zonaId,
+            @RequestParam(required = false) EstadoPedido estado) {
+        
+        List<PedidoResponse> pedidos;
+        
+        // Filtro combinado: zonaId + estado
+        if (zonaId != null && estado != null) {
+            pedidos = pedidoService.obtenerPedidosPorZonaYEstado(zonaId, estado);
+        }
+        // Solo zonaId
+        else if (zonaId != null) {
+            pedidos = pedidoService.obtenerPedidosPorZona(zonaId);
+        }
+        // Solo estado
+        else if (estado != null) {
+            pedidos = pedidoService.obtenerPedidosPorEstado(estado);
+        }
+        // Sin filtros
+        else {
+            pedidos = pedidoService.obtenerTodosLosPedidos();
+        }
+        
+=======
     //Obtener todos los pedidos
     @GetMapping
     public ResponseEntity<List<PedidoResponse>> obtenerTodosLosPedidos() {
         List<PedidoResponse> pedidos = pedidoService.obtenerTodosLosPedidos();
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return ResponseEntity.ok(pedidos);
     }
 

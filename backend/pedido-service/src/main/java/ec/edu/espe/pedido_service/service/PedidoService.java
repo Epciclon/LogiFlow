@@ -14,7 +14,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+<<<<<<< HEAD
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+=======
+import java.util.List;
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,6 +30,10 @@ import java.util.stream.Collectors;
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
+<<<<<<< HEAD
+    private final NotificationProducer notificationProducer;
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 
     //Crear nuevo pedido con validación de cobertura
     @Transactional
@@ -52,6 +62,10 @@ public class PedidoService {
         pedido.setDireccionDestino(request.getDireccionDestino());
         pedido.setLatitudDestino(request.getLatitudDestino());
         pedido.setLongitudDestino(request.getLongitudDestino());
+<<<<<<< HEAD
+        pedido.setZonaId(request.getZonaId());
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         pedido.setDescripcionPaquete(request.getDescripcionPaquete());
         pedido.setPesoKg(request.getPesoKg());
         pedido.setDimensiones(request.getDimensiones());
@@ -72,6 +86,24 @@ public class PedidoService {
         // Guardar la entidad (persist - una sola vez)
         Pedido savedPedido = pedidoRepository.save(pedido);
         
+<<<<<<< HEAD
+        // Publicar evento de pedido creado
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("numeroPedido", savedPedido.getNumeroPedido());
+            eventData.put("clienteNombre", savedPedido.getClienteNombre());
+            eventData.put("tipoEntrega", savedPedido.getTipoEntrega().name());
+            eventData.put("prioridad", savedPedido.getPrioridad().name());
+            eventData.put("direccionDestino", savedPedido.getDireccionDestino());
+            
+            notificationProducer.publishPedidoCreado(savedPedido.getId().toString(), eventData);
+        } catch (Exception e) {
+            // No fallar la transacción si falla el evento, solo loguear
+            System.err.println("Error al publicar evento pedido.creado: " + e.getMessage());
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(savedPedido);
     }
 
@@ -123,12 +155,36 @@ public class PedidoService {
                 .collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
+    //Obtener pedidos por zona
+    @Transactional(readOnly = true)
+    public List<PedidoResponse> obtenerPedidosPorZona(String zonaId) {
+        return pedidoRepository.findByZonaIdAndActivoTrue(zonaId).stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+    //Obtener pedidos por zona y estado
+    @Transactional(readOnly = true)
+    public List<PedidoResponse> obtenerPedidosPorZonaYEstado(String zonaId, EstadoPedido estado) {
+        return pedidoRepository.findByZonaIdAndEstadoAndActivoTrue(zonaId, estado).stream()
+                .map(this::convertirAResponse)
+                .collect(Collectors.toList());
+    }
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
     //Actualizar pedido
     @Transactional
     public PedidoResponse actualizarPedido(UUID id, UpdatePedidoRequest request) {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado con ID: " + id));
 
+<<<<<<< HEAD
+        EstadoPedido estadoAnterior = pedido.getEstado();
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         if (request.getEstado() != null) {
             pedido.setEstado(request.getEstado());
             //Si se marca como ENTREGADO, registrar fecha de entrega real
@@ -171,6 +227,29 @@ public class PedidoService {
         }
 
         Pedido updatedPedido = pedidoRepository.save(pedido);
+<<<<<<< HEAD
+        
+        // Publicar evento si cambió el estado
+        if (request.getEstado() != null && !estadoAnterior.equals(request.getEstado())) {
+            try {
+                Map<String, Object> eventData = new HashMap<>();
+                eventData.put("numeroPedido", updatedPedido.getNumeroPedido());
+                eventData.put("clienteNombre", updatedPedido.getClienteNombre());
+                eventData.put("repartidorNombre", updatedPedido.getRepartidorNombre());
+                
+                notificationProducer.publishPedidoEstadoActualizado(
+                    updatedPedido.getId().toString(),
+                    estadoAnterior.name(),
+                    updatedPedido.getEstado().name(),
+                    eventData
+                );
+            } catch (Exception e) {
+                System.err.println("Error al publicar evento pedido.estado.actualizado: " + e.getMessage());
+            }
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedPedido);
     }
 
@@ -180,11 +259,38 @@ public class PedidoService {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado con ID: " + pedidoId));
 
+<<<<<<< HEAD
+        EstadoPedido estadoAnterior = pedido.getEstado();
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         pedido.setRepartidorId(repartidorId);
         pedido.setRepartidorNombre(repartidorNombre);
         pedido.setEstado(EstadoPedido.ASIGNADO);
 
         Pedido updatedPedido = pedidoRepository.save(pedido);
+<<<<<<< HEAD
+        
+        // Publicar evento de estado actualizado
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("numeroPedido", updatedPedido.getNumeroPedido());
+            eventData.put("clienteNombre", updatedPedido.getClienteNombre());
+            eventData.put("repartidorId", repartidorId.toString());
+            eventData.put("repartidorNombre", repartidorNombre);
+            
+            notificationProducer.publishPedidoEstadoActualizado(
+                updatedPedido.getId().toString(),
+                estadoAnterior.name(),
+                EstadoPedido.ASIGNADO.name(),
+                eventData
+            );
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento de asignación: " + e.getMessage());
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedPedido);
     }
 
@@ -194,6 +300,11 @@ public class PedidoService {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido no encontrado con ID: " + pedidoId));
 
+<<<<<<< HEAD
+        EstadoPedido estadoAnterior = pedido.getEstado();
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         pedido.setEstado(nuevoEstado);
 
         //Si se marca como ENTREGADO, registrar fecha de entrega real
@@ -202,6 +313,27 @@ public class PedidoService {
         }
 
         Pedido updatedPedido = pedidoRepository.save(pedido);
+<<<<<<< HEAD
+        
+        // Publicar evento de estado actualizado
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("numeroPedido", updatedPedido.getNumeroPedido());
+            eventData.put("clienteNombre", updatedPedido.getClienteNombre());
+            eventData.put("repartidorNombre", updatedPedido.getRepartidorNombre());
+            
+            notificationProducer.publishPedidoEstadoActualizado(
+                updatedPedido.getId().toString(),
+                estadoAnterior.name(),
+                nuevoEstado.name(),
+                eventData
+            );
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento cambio de estado: " + e.getMessage());
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedPedido);
     }
 
@@ -222,6 +354,17 @@ public class PedidoService {
         );
 
         Pedido updatedPedido = pedidoRepository.save(pedido);
+<<<<<<< HEAD
+        
+        // Publicar evento de pedido cancelado
+        try {
+            notificationProducer.publishPedidoCancelado(updatedPedido.getId().toString(), motivo);
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento pedido.cancelado: " + e.getMessage());
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedPedido);
     }
 
@@ -267,6 +410,10 @@ public class PedidoService {
                 .direccionDestino(pedido.getDireccionDestino())
                 .latitudDestino(pedido.getLatitudDestino())
                 .longitudDestino(pedido.getLongitudDestino())
+<<<<<<< HEAD
+                .zonaId(pedido.getZonaId())
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
                 .descripcionPaquete(pedido.getDescripcionPaquete())
                 .pesoKg(pedido.getPesoKg())
                 .dimensiones(pedido.getDimensiones())

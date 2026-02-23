@@ -48,6 +48,13 @@ public class CreatePedidoRequest {
 
     private Double longitudDestino;
 
+<<<<<<< HEAD
+    @NotBlank(message = "El código postal de la zona es obligatorio")
+    @Size(max = 10)
+    private String zonaId;
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
     @NotBlank(message = "La descripción del paquete es obligatoria")
     @Size(max = 500)
     private String descripcionPaquete;

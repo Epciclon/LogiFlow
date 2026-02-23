@@ -70,6 +70,13 @@ public class Pedido {
 
     private Double longitudDestino;
 
+<<<<<<< HEAD
+    //Zona geográfica (código postal del destino para agrupación)
+    @Column(nullable = false, length = 10)
+    private String zonaId;
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
     //Detalles del paquete
     @Column(nullable = false, length = 500)
     private String descripcionPaquete;

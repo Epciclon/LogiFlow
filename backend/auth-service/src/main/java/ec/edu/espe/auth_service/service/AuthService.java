@@ -66,7 +66,11 @@ public class AuthService {
             throw new IllegalArgumentException("El email ya existe: " + request.getEmail());
         }
 
+<<<<<<< HEAD
+        //Crear nuevo usuario con constructor - inicializar roles desde el principio
+=======
         //Crear nuevo usuario con constructor - dejar roles e ID null inicialmente
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         Usuario usuario = new Usuario();
         usuario.setId(null); // Forzar ID a null para garantizar que Hibernate lo trate como transient
         usuario.setUsername(request.getUsername());
@@ -77,6 +81,16 @@ public class AuthService {
         usuario.setActivo(true);
         usuario.setCuentaBloqueada(false);
         usuario.setIntentosFallidos(0);
+<<<<<<< HEAD
+        
+        //Inicializar roles con CLIENTE desde el principio
+        Set<RolEnum> roles = new HashSet<>();
+        roles.add(RolEnum.CLIENTE);
+        usuario.setRoles(roles);
+
+        //Guardar usuario con roles ya asignados
+        Usuario savedUsuario = usuarioRepository.save(usuario);
+=======
         usuario.setRoles(null); // Dejar roles como null inicialmente
 
         //Guardar usando repository (debería hacer persist porque ID es null)
@@ -90,6 +104,7 @@ public class AuthService {
         
         //Guardar nuevamente para actualizar roles
         savedUsuario = usuarioRepository.save(savedUsuario);
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         logger.info("Usuario registrado exitosamente: {}", savedUsuario.getUsername());
 
         //Generar tokens JWT
@@ -181,6 +196,17 @@ public class AuthService {
     private AuthResponse generateAuthResponse(Usuario usuario) {
         //Preparar claims para el JWT
         Map<String, Object> claims = new HashMap<>();
+<<<<<<< HEAD
+        
+        //Verificar que roles no sea null antes de hacer stream
+        if (usuario.getRoles() == null || usuario.getRoles().isEmpty()) {
+            logger.warn("Usuario {} no tiene roles asignados, asignando CLIENTE por defecto", usuario.getUsername());
+            usuario.setRoles(new HashSet<>());
+            usuario.getRoles().add(RolEnum.CLIENTE);
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         claims.put("roles", usuario.getRoles().stream()
                 .map(Enum::name)
                 .collect(Collectors.toList()));

@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: logiflow
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 8087
+      targetPort: 8087
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+      - name: notification-service
+        image: notification-service:v3
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8087
+        env:
+        - name: DATABASE_HOST
+          value: "postgres-notifications"
+        - name: DATABASE_PORT
+          value: "5432"
+        - name: DATABASE_NAME
+          value: "notifications_db"
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: POSTGRES_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: POSTGRES_PASSWORD
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: RABBITMQ_PORT
+        - name: RABBITMQ_USERNAME
+          value: "guest"
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: RABBITMQ_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: JWT_SECRET
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: NODE_ENV
+        resources:
+          requests:
+            memory: "448Mi"
+            cpu: "250m"
+          limits:
+            memory: "896Mi"
+            cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 8087
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          tcpSocket:
+            port: 8087
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10

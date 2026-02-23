@@ -1,0 +1,17 @@
+﻿{
+  "clienteId": "b860d4f4-1eb3-42b1-8298-c11da479dd46",
+  "clienteNombre": "Juan Pérez",
+  "tipoEntrega": "URBANA_RAPIDA",
+  "prioridad": "NORMAL",
+  "direccionOrigen": "Av. 6 de Diciembre N36-109, Quito",
+  "latitudOrigen": -0.1807,
+  "longitudOrigen": -78.4678,
+  "direccionDestino": "Av. Naciones Unidas E10-13, Quito",
+  "latitudDestino": -0.1900,
+  "longitudDestino": -78.4800,
+  "zonaId": "170150",
+  "descripcionPaquete": "Documentos urgentes",
+  "pesoKg": 0.5,
+  "dimensiones": "30x20x5 cm",
+  "observaciones": "Llamar al llegar"
+}

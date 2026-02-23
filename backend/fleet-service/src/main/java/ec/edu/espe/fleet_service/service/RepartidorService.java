@@ -12,7 +12,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+<<<<<<< HEAD
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+=======
+import java.util.List;
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,6 +29,10 @@ public class RepartidorService {
 
     private final RepartidorRepository repartidorRepository;
     private final VehiculoRepository vehiculoRepository;
+<<<<<<< HEAD
+    private final NotificationProducer notificationProducer;
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
 
     //Crear nuevo repartidor
     @Transactional
@@ -64,6 +74,23 @@ public class RepartidorService {
         }
 
         Repartidor savedRepartidor = repartidorRepository.save(repartidor);
+<<<<<<< HEAD
+        
+        // Publicar evento de repartidor creado
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("codigoEmpleado", savedRepartidor.getCodigoEmpleado());
+            eventData.put("nombreCompleto", savedRepartidor.getNombreCompleto());
+            eventData.put("email", savedRepartidor.getEmail());
+            eventData.put("estado", savedRepartidor.getEstado().name());
+            
+            notificationProducer.publishRepartidorCreado(savedRepartidor.getId().toString(), eventData);
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento repartidor.creado: " + e.getMessage());
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(savedRepartidor);
     }
 
@@ -114,6 +141,11 @@ public class RepartidorService {
         Repartidor repartidor = repartidorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Repartidor no encontrado con ID: " + id));
 
+<<<<<<< HEAD
+        EstadoRepartidor estadoAnterior = repartidor.getEstado();
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         if (request.getNombreCompleto() != null) {
             repartidor.setNombreCompleto(request.getNombreCompleto());
         }
@@ -160,6 +192,28 @@ public class RepartidorService {
         }
 
         Repartidor updatedRepartidor = repartidorRepository.save(repartidor);
+<<<<<<< HEAD
+        
+        // Publicar evento si cambió el estado
+        if (request.getEstado() != null && !estadoAnterior.equals(request.getEstado())) {
+            try {
+                Map<String, Object> eventData = new HashMap<>();
+                eventData.put("codigoEmpleado", updatedRepartidor.getCodigoEmpleado());
+                eventData.put("nombreCompleto", updatedRepartidor.getNombreCompleto());
+                
+                notificationProducer.publishRepartidorEstadoActualizado(
+                    updatedRepartidor.getId().toString(),
+                    estadoAnterior.name(),
+                    updatedRepartidor.getEstado().name(),
+                    eventData
+                );
+            } catch (Exception e) {
+                System.err.println("Error al publicar evento repartidor.estado.actualizado: " + e.getMessage());
+            }
+        }
+        
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedRepartidor);
     }
 
@@ -169,8 +223,32 @@ public class RepartidorService {
         Repartidor repartidor = repartidorRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Repartidor no encontrado con ID: " + id));
         
+<<<<<<< HEAD
+        EstadoRepartidor estadoAnterior = repartidor.getEstado();
+        
         repartidor.setEstado(nuevoEstado);
         Repartidor updatedRepartidor = repartidorRepository.save(repartidor);
+        
+        // Publicar evento de estado actualizado
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("codigoEmpleado", updatedRepartidor.getCodigoEmpleado());
+            eventData.put("nombreCompleto", updatedRepartidor.getNombreCompleto());
+            
+            notificationProducer.publishRepartidorEstadoActualizado(
+                updatedRepartidor.getId().toString(),
+                estadoAnterior.name(),
+                nuevoEstado.name(),
+                eventData
+            );
+        } catch (Exception e) {
+            System.err.println("Error al publicar evento cambio de estado: " + e.getMessage());
+        }
+        
+=======
+        repartidor.setEstado(nuevoEstado);
+        Repartidor updatedRepartidor = repartidorRepository.save(repartidor);
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
         return convertirAResponse(updatedRepartidor);
     }
 

@@ -24,6 +24,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
 
     List<Pedido> findByTipoEntregaAndActivoTrue(TipoEntrega tipoEntrega);
 
+<<<<<<< HEAD
+    List<Pedido> findByZonaIdAndActivoTrue(String zonaId);
+
+    List<Pedido> findByZonaIdAndEstadoAndActivoTrue(String zonaId, EstadoPedido estado);
+
+=======
+>>>>>>> 9e74cc4ddb0f03faf66297a7ffe73dc4a3b2a29a
     List<Pedido> findByActivoTrue();
 
     Boolean existsByNumeroPedido(String numeroPedido);

@@ -1,0 +1,73 @@
+{
+  "_format_version": "3.0",
+  "services": [
+    {
+      "name": "auth-service",
+      "url": "http://auth-service:8082",
+      "routes": [
+        {
+          "name": "auth-route",
+          "paths": ["/auth"],
+          "strip_path": true
+        }
+      ],
+      "plugins": []
+    },
+    {
+      "name": "pedido-service",
+      "url": "http://pedido-service:8083",
+      "routes": [
+        {
+          "name": "pedido-route",
+          "paths": ["/pedidos"],
+          "strip_path": true
+        }
+      ],
+      "plugins": []
+    },
+    {
+      "name": "fleet-service",
+      "url": "http://fleet-service:8084",
+      "routes": [
+        {
+          "name": "fleet-route",
+          "paths": ["/fleet"],
+          "strip_path": true
+        }
+      ],
+      "plugins": []
+    },
+    {
+      "name": "billing-service",
+      "url": "http://billing-service:8085",
+      "routes": [
+        {
+          "name": "billing-route",
+          "paths": ["/billing"],
+          "strip_path": true
+        }
+      ],
+      "plugins": []
+    }
+  ],
+  "plugins": [
+    {
+      "name": "rate-limiting",
+      "config": {
+        "minute": 100,
+        "policy": "local"
+      }
+    },
+    {
+      "name": "cors",
+      "config": {
+        "origins": ["*"],
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "headers": ["Accept", "Authorization", "Content-Type"],
+        "exposed_headers": ["X-Auth-Token"],
+        "credentials": true,
+        "max_age": 3600
+      }
+    }
+  ]
+}

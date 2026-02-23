@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: graphql-gateway
+  namespace: logiflow
+spec:
+  selector:
+    app: graphql-gateway
+  ports:
+    - port: 4000
+      targetPort: 4000
+      nodePort: 30400
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: graphql-gateway
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: graphql-gateway
+  template:
+    metadata:
+      labels:
+        app: graphql-gateway
+    spec:
+      containers:
+      - name: graphql-gateway
+        image: graphql-gateway:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 4000
+        env:
+        - name: AUTH_SERVICE_URL
+          value: "http://kong-gateway:8000/auth"
+        - name: PEDIDO_SERVICE_URL
+          value: "http://kong-gateway:8000/pedidos/api/pedidos"
+        - name: FLEET_SERVICE_URL
+          value: "http://kong-gateway:8000/fleet/api/repartidores"
+        - name: BILLING_SERVICE_URL
+          value: "http://kong-gateway:8000/billing/api/facturas"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: logiflow-secrets
+              key: JWT_SECRET
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: logiflow-config
+              key: NODE_ENV
+        resources:
+          requests:
+            memory: "320Mi"
+            cpu: "250m"
+          limits:
+            memory: "640Mi"
+            cpu: "500m"
+        livenessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          tcpSocket:
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
